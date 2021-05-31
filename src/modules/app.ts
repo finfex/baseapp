@@ -19,6 +19,7 @@ import { authReducer  } from './user/auth';
 import { beneficiariesReducer } from './user/beneficiaries';
 import { getGeetestCaptchaReducer } from './user/captcha';
 import { customizationUpdateReducer } from './user/customization';
+import { depositIntentionReducer  } from './user/deposits';
 import { documentationReducer } from './user/documentation';
 import { sendEmailVerificationReducer } from './user/emailVerification';
 import { historyReducer  } from './user/history';
@@ -80,4 +81,5 @@ export const userReducer = combineReducers({
     userActivity: userActivityReducer,
     wallets: walletsReducer,
     withdrawLimit: withdrawLimitReducer,
+    depositIntentionState: depositIntentionReducer,
 });

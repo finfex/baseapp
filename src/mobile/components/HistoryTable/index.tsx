@@ -3,13 +3,18 @@ import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { Pagination, Table } from '../../../components';
 import { DEFAULT_CCY_PRECISION } from '../../../constants';
-import { localeDate } from '../../../helpers';
+import { localeDate, TransferLinks } from '../../../helpers';
 import { useCurrenciesFetch, useHistoryFetch, useWalletsFetch } from '../../../hooks';
 import { RootState, selectCurrentPage, selectLastElemIndex, selectNextPageExists } from '../../../modules';
 import { selectCurrencies } from '../../../modules/public/currencies';
 import { selectFirstElemIndex, selectHistory } from '../../../modules/user/history';
 import { selectWallets } from '../../../modules/user/wallets';
 import { RowItem } from './Rowitem';
+
+const presentTransferLinks = (links: TransferLinks): JSX.Element[] =>
+  Object.entries(links).map(([key, value]) =>
+    <a href={value} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '5px' }}>{key}</a>
+  );
 
 const DEFAULT_LIMIT = 6;
 
@@ -34,7 +39,7 @@ const HistoryTable = (props: any) => {
     const onClickNextPage = () => {
         setCurrentPage(Number(page) + 1);
     };
-    const formatTxState = (tx: string, confirmations?: number, minConfirmations?: number) => {
+    const formatTxState = (tx: string, confirmations?: number, minConfirmations?: number, transferLinks?: TransferLinks) => {
         const statusMapping = {
             succeed: <span className="cr-mobile-history-table--success">{intl.formatMessage({ id: 'page.body.history.withdraw.content.status.succeed' })}</span>,
             failed:  <span className="cr-mobile-history-table--failed">{intl.formatMessage({ id: 'page.body.history.withdraw.content.status.failed' })}</span>,
@@ -45,14 +50,17 @@ const HistoryTable = (props: any) => {
             processing: <span className="cr-mobile-history-table--pending">{intl.formatMessage({ id: 'page.body.history.deposit.content.status.processing' })}</span>,
             prepared: <span className="cr-mobile-history-table--pending">{intl.formatMessage({ id: 'page.body.wallets.table.pending' })}</span>,
             submitted: <span className="cr-mobile-history-table--pending">{(confirmations !== undefined && minConfirmations !== undefined) ? (
-                `${confirmations}/${minConfirmations}`
+              (transferLinks !== undefined)
+                ? (presentTransferLinks(transferLinks))
+                : `${confirmations}/${minConfirmations}`
             ) : (
                 intl.formatMessage({ id: 'page.body.wallets.table.pending' })
                 )}</span>,
+            confirming: (transferLinks === undefined) ? <span className="cr-mobile-history-table--success">{intl.formatMessage({ id: 'page.body.history.deposit.content.status.confirming' })}</span> : presentTransferLinks(transferLinks),
             skipped: <span className="cr-mobile-history-table--success">{intl.formatMessage({ id: 'page.body.history.deposit.content.status.skipped' })}</span>,
         };
 
-        return statusMapping[tx];
+        return statusMapping[tx] || tx;
     };
     const retrieveData = () => {
         const {
@@ -71,7 +79,8 @@ const HistoryTable = (props: any) => {
             const confirmations = type === 'deposits' && item.confirmations;
             const itemCurrency = currencies && currencies.find(cur => cur.id === currency);
             const minConfirmations = itemCurrency && itemCurrency.min_confirmations;
-            const state = 'state' in item ? formatTxState(item.state, confirmations, minConfirmations) : '';
+            const transferLinks = 'transfer_links' in item ? item.transfer_links : undefined;
+            const state = 'state' in item ? formatTxState(item.state, confirmations, minConfirmations, transferLinks) : '';
 
             return [
                 <RowItem
